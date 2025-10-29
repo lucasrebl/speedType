@@ -1,0 +1,47 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with gradient -->
+  <defs>
+    <linearGradient id="backgroundGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="keyboardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f8f9fa;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <circle cx="32" cy="32" r="32" fill="url(#backgroundGrad)"/>
+  
+  <!-- Keyboard base -->
+  <rect x="12" y="28" width="40" height="24" rx="4" fill="url(#keyboardGrad)" stroke="#e0e0e0" stroke-width="1"/>
+  
+  <!-- Keyboard keys -->
+  <rect x="16" y="32" width="4" height="4" rx="1" fill="#667eea"/>
+  <rect x="22" y="32" width="4" height="4" rx="1" fill="#667eea"/>
+  <rect x="28" y="32" width="4" height="4" rx="1" fill="#667eea"/>
+  <rect x="34" y="32" width="4" height="4" rx="1" fill="#667eea"/>
+  <rect x="40" y="32" width="4" height="4" rx="1" fill="#667eea"/>
+  <rect x="46" y="32" width="4" height="4" rx="1" fill="#667eea"/>
+  
+  <rect x="18" y="38" width="4" height="4" rx="1" fill="#667eea"/>
+  <rect x="24" y="38" width="4" height="4" rx="1" fill="#667eea"/>
+  <rect x="30" y="38" width="4" height="4" rx="1" fill="#667eea"/>
+  <rect x="36" y="38" width="4" height="4" rx="1" fill="#667eea"/>
+  <rect x="42" y="38" width="4" height="4" rx="1" fill="#667eea"/>
+  
+  <rect x="20" y="44" width="24" height="4" rx="1" fill="#667eea"/>
+  
+  <!-- Speed lines (indicating fast typing) -->
+  <path d="M8 20 L20 20" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  <path d="M6 16 L16 16" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  <path d="M10 24 L18 24" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  
+  <path d="M44 20 L56 20" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  <path d="M48 16 L58 16" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  <path d="M46 24 L54 24" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Lightning bolt for speed -->
+  <path d="M30 8 L26 18 L32 18 L28 28 L38 16 L30 16 L34 8 Z" fill="#FFD700" stroke="#FFA500" stroke-width="1"/>
+</svg>
