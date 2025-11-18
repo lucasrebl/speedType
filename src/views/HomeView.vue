@@ -69,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useTypingTest } from '@/services/useTypingTest'
 import StatsDisplay from '@/components/StatsDisplay.vue'
 import TextDisplay from '@/components/TextDisplay.vue'
@@ -119,6 +119,10 @@ const handleDifficultySelect = (difficulty: 'easy' | 'medium' | 'hard' | 'hardco
 
 const handleStartTest = () => {
   startTest()
+  // Donner automatiquement le focus à l'input après avoir démarré le test
+  nextTick(() => {
+    typingInputRef.value?.focusInput()
+  })
 }
 
 const handleStartTyping = () => {
