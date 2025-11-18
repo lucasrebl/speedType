@@ -25,6 +25,27 @@ export class StatsService {
     return Math.round(((totalKeystrokes - errors) / totalKeystrokes) * 100)
   }
 
+  static calculateAccuracyBasedOnFullText(userInput: string, targetText: string, typingErrors: number): number {
+    if (!targetText) return 100
+    
+    const targetLength = targetText.length
+    const userLength = userInput.length
+    
+    // Calculer les caractères corrects (sans les erreurs de frappe)
+    const correctChars = Math.min(userLength, targetLength) - typingErrors
+    
+    // Calculer les caractères manquants
+    const missingChars = Math.max(0, targetLength - userLength)
+    
+    // Total des erreurs = erreurs de frappe + caractères manquants
+    const totalErrors = typingErrors + missingChars
+    
+    // Précision basée sur le texte complet
+    const accuracy = Math.max(0, (targetLength - totalErrors) / targetLength * 100)
+    
+    return Math.round(accuracy)
+  }
+
   static calculateProgress(userInput: string, targetSentence: string): number {
     if (!targetSentence) return 0
     return Math.min((userInput.length / targetSentence.length) * 100, 100)

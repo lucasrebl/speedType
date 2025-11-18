@@ -60,6 +60,9 @@
         :show="showResults"
         :stats="getResults().stats"
         :completed="isCompleted"
+        :original-text="currentSentence"
+        :user-typed-text="userInput"
+        :error-history="errorHistory"
         @close="showResults = false"
         @restart-same="handleRestartSameFromModal"
         @new-test="handleNewTestFromModal"
@@ -92,6 +95,7 @@ const {
   progress,
   wpm,
   accuracy,
+  errorHistory,
   startTest,
   stopTest,
   resetTest,

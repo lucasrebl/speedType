@@ -18,6 +18,59 @@ export const useTypingTest = () => {
   const totalKeystrokes = ref(0)
   const elapsedTime = ref(0)
   
+  // Historique des erreurs pour affichage final
+  interface ErrorRecord {
+    position: number
+    expectedChar: string
+    typedChar: string
+    timestamp: number
+    wordContext: {
+      expectedWord: string
+      typedWord: string
+      wordStartPos: number
+      errorPosInWord: number
+    }
+  }
+  const errorHistory = ref<ErrorRecord[]>([])
+  
+  // Fonction utilitaire pour extraire le contexte du mot
+  const getWordContext = (text: string, position: number, userText: string, userPosition: number) => {
+    // Trouver le début et la fin du mot dans le texte cible
+    let wordStart = position
+    let wordEnd = position
+    
+    // Trouver le début du mot (reculer jusqu'à un espace ou le début)
+    while (wordStart > 0 && text[wordStart - 1] !== ' ') {
+      wordStart--
+    }
+    
+    // Trouver la fin du mot (avancer jusqu'à un espace ou la fin)
+    while (wordEnd < text.length && text[wordEnd] !== ' ') {
+      wordEnd++
+    }
+    
+    // Extraire le mot attendu
+    const expectedWord = text.slice(wordStart, wordEnd)
+    
+    // Trouver le mot correspondant dans le texte de l'utilisateur
+    let userWordStart = wordStart
+    let userWordEnd = Math.min(userText.length, wordEnd)
+    
+    // Ajuster si l'utilisateur a tapé plus ou moins
+    while (userWordEnd < userText.length && userText[userWordEnd] !== ' ') {
+      userWordEnd++
+    }
+    
+    const typedWord = userText.slice(userWordStart, userWordEnd)
+    
+    return {
+      expectedWord,
+      typedWord,
+      wordStartPos: wordStart,
+      errorPosInWord: position - wordStart
+    }
+  }
+
   // Services
   const timer = new TimerService((time) => {
     elapsedTime.value = time
@@ -37,7 +90,12 @@ export const useTypingTest = () => {
   })
   
   const accuracy = computed(() => {
-    return StatsService.calculateAccuracy(totalKeystrokes.value, errors.value)
+    if (!currentSentence.value) return 100
+    return StatsService.calculateAccuracyBasedOnFullText(
+      userInput.value,
+      currentSentence.value.text,
+      errors.value
+    )
   })
   
   // Surveillance de la saisie utilisateur
@@ -67,6 +125,22 @@ export const useTypingTest = () => {
           if (newCleanCharIndex >= targetClean.length || 
               currentCleanInput[newCleanCharIndex] !== targetClean[newCleanCharIndex]) {
             errors.value++
+            
+            // Enregistrer l'erreur dans l'historique avec contexte du mot
+            const wordContext = getWordContext(
+              targetClean,
+              newCleanCharIndex,
+              currentCleanInput,
+              newCleanCharIndex
+            )
+            
+            errorHistory.value.push({
+              position: newCleanCharIndex,
+              expectedChar: targetClean[newCleanCharIndex] || '',
+              typedChar: currentCleanInput[newCleanCharIndex] || '',
+              timestamp: Date.now(),
+              wordContext
+            })
           }
         }
       }
@@ -114,6 +188,7 @@ export const useTypingTest = () => {
     errors.value = 0
     totalKeystrokes.value = 0
     elapsedTime.value = 0
+    errorHistory.value = []
     currentSentence.value = null
     currentDifficulty.value = null
   }
@@ -175,6 +250,7 @@ export const useTypingTest = () => {
     errors,
     totalKeystrokes,
     elapsedTime,
+    errorHistory,
     
     // Calculs
     progress,

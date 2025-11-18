@@ -47,6 +47,79 @@
         <div class="performance-message">
           <p class="message">{{ getPerformanceMessage() }}</p>
         </div>
+        
+        <div v-if="originalText && userTypedText" class="text-comparison">
+          <h3 class="comparison-title">📝 Comparaison de votre saisie</h3>
+          
+          <div class="text-section">
+            <h4 class="text-label">Texte original :</h4>
+            <div class="original-text">{{ originalText }}</div>
+          </div>
+          
+          <div class="text-section">
+            <h4 class="text-label">Votre saisie :</h4>
+            <div class="typed-text">
+              <span
+                v-for="(char, index) in getComparisonChars()"
+                :key="index"
+                :class="getCharClass(char)"
+              >
+                {{ char.display }}
+              </span>
+              <span v-if="userTypedText.length < originalText.length" class="missing-text">
+                {{ originalText.slice(userTypedText.length) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div v-if="errorHistory && errorHistory.length > 0" class="error-history">
+          <h3 class="error-history-title">🔍 Historique des erreurs</h3>
+          <p class="error-history-subtitle">
+            Toutes les erreurs commises pendant la saisie ({{ errorHistory.length }} erreur{{ errorHistory.length > 1 ? 's' : '' }})
+          </p>
+          
+          <div class="error-list">
+            <div
+              v-for="(error, index) in errorHistory"
+              :key="`error-${index}`"
+              class="error-item"
+            >
+              <div class="error-position">{{ getWordNumber(error.wordContext.wordStartPos) }}</div>
+              <div class="error-word-context">
+                <div class="word-comparison">
+                  <div class="word-row">
+                    <span class="word-label">Attendu:</span>
+                    <span class="word-content expected-word">
+                      <span
+                        v-for="(char, charIndex) in error.wordContext.expectedWord"
+                        :key="`exp-${charIndex}`"
+                        :class="{ 'error-char': charIndex === error.wordContext.errorPosInWord }"
+                      >
+                        {{ char }}
+                      </span>
+                    </span>
+                  </div>
+                  <div class="word-row">
+                    <span class="word-label">Tapé:</span>
+                    <span class="word-content typed-word">
+                      <span
+                        v-for="(char, charIndex) in error.wordContext.typedWord"
+                        :key="`typ-${charIndex}`"
+                        :class="{ 'error-char': charIndex === error.wordContext.errorPosInWord }"
+                      >
+                        {{ char }}
+                      </span>
+                      <span v-if="error.wordContext.typedWord.length < error.wordContext.expectedWord.length" class="missing-chars">
+                        {{ error.wordContext.expectedWord.slice(error.wordContext.typedWord.length) }}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div class="modal-footer">
@@ -68,6 +141,20 @@ interface Props {
   show: boolean
   stats: TypingStats
   completed: boolean
+  originalText?: string
+  userTypedText?: string
+  errorHistory?: Array<{
+    position: number
+    expectedChar: string
+    typedChar: string
+    timestamp: number
+    wordContext: {
+      expectedWord: string
+      typedWord: string
+      wordStartPos: number
+      errorPosInWord: number
+    }
+  }>
 }
 
 interface Emits {
@@ -100,6 +187,65 @@ const getPerformanceMessage = (): string => {
     return "Incroyable ! Vous êtes un véritable expert de la frappe ! 🏆"
   }
 }
+
+interface ComparisonChar {
+  display: string
+  status: 'correct' | 'incorrect' | 'missing'
+}
+
+const getComparisonChars = (): ComparisonChar[] => {
+  if (!props.originalText || !props.userTypedText) return []
+  
+  const chars: ComparisonChar[] = []
+  const maxLength = Math.max(props.originalText.length, props.userTypedText.length)
+  
+  for (let i = 0; i < maxLength; i++) {
+    const originalChar = props.originalText[i]
+    const userChar = props.userTypedText[i]
+    
+    if (userChar === undefined) {
+      // L'utilisateur n'a pas tapé ce caractère
+      chars.push({
+        display: originalChar || '',
+        status: 'missing'
+      })
+    } else if (originalChar === undefined) {
+      // L'utilisateur a tapé plus que nécessaire
+      chars.push({
+        display: userChar,
+        status: 'incorrect'
+      })
+    } else if (originalChar === userChar) {
+      // Caractère correct
+      chars.push({
+        display: userChar,
+        status: 'correct'
+      })
+    } else {
+      // Caractère incorrect
+      chars.push({
+        display: userChar,
+        status: 'incorrect'
+      })
+    }
+  }
+  
+  return chars
+}
+
+const getCharClass = (char: ComparisonChar): string => {
+  return `char char-${char.status}`
+}
+
+const getWordNumber = (wordStartPos: number): string => {
+  if (!props.originalText) return 'Mot 1'
+  
+  // Compter les espaces avant cette position pour déterminer le numéro du mot
+  const textBeforeWord = props.originalText.slice(0, wordStartPos)
+  const wordNumber = textBeforeWord.split(' ').length
+  
+  return `Mot ${wordNumber}`
+}
 </script>
 
 <style scoped>
@@ -131,9 +277,9 @@ const getPerformanceMessage = (): string => {
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 600px;
-  width: 100%;
-  max-height: 90vh;
+  max-width: 900px;
+  width: 95%;
+  max-height: 95vh;
   overflow-y: auto;
 }
 
@@ -277,9 +423,30 @@ const getPerformanceMessage = (): string => {
   border-color: #0b7dda;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 800px) {
   .modal-content {
+    max-width: 600px;
+    width: 100%;
     margin: 1rem;
+  }
+  
+  .modal-body {
+    display: block !important;
+  }
+  
+  .text-comparison {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e0e0e0;
+    border-right: none;
+    padding-right: 0;
+  }
+  
+  .error-history {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e0e0e0;
+    padding-left: 0;
   }
   
   .modal-header,
@@ -296,5 +463,239 @@ const getPerformanceMessage = (): string => {
   .modal-footer {
     flex-direction: column;
   }
+}
+
+/* Styles pour la comparaison de texte */
+.text-comparison {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Layout amélioré pour les écrans plus larges */
+@media (min-width: 800px) {
+  .modal-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+  
+  .results-grid {
+    grid-column: 1 / -1;
+  }
+  
+  .performance-message {
+    grid-column: 1 / -1;
+  }
+  
+  .text-comparison {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    border-right: 1px solid #e0e0e0;
+    padding-right: 2rem;
+  }
+  
+  .error-history {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    padding-left: 2rem;
+  }
+}
+
+.comparison-title {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.text-section {
+  margin-bottom: 1.5rem;
+}
+
+.text-label {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.original-text,
+.typed-text {
+  padding: 1rem;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  line-height: 1.6;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.original-text {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  color: #333;
+}
+
+.typed-text {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+}
+
+.char {
+  position: relative;
+}
+
+.char-correct {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.char-incorrect {
+  background-color: #f8d7da;
+  color: #721c24;
+  text-decoration: underline;
+}
+
+.char-missing {
+  background-color: #fff3cd;
+  color: #856404;
+  opacity: 0.7;
+}
+
+.missing-text {
+  background-color: #fff3cd;
+  color: #856404;
+  opacity: 0.7;
+}
+
+/* Styles pour l'historique des erreurs */
+.error-history {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.error-history-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.error-history-subtitle {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.9rem;
+  color: #666;
+  font-style: italic;
+}
+
+.error-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.error-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.error-position {
+  font-weight: 600;
+  color: #c53030;
+  min-width: 80px;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+}
+
+.error-word-context {
+  flex: 1;
+}
+
+.word-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.word-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.word-label {
+  font-weight: 600;
+  min-width: 70px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.word-content {
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
+.expected-word {
+  background-color: #c6f6d5;
+  color: #22543d;
+  border: 1px solid #9ae6b4;
+}
+
+.typed-word {
+  background-color: #fed7d7;
+  color: #c53030;
+  border: 1px solid #fc8181;
+}
+
+.error-char {
+  background-color: #f56565;
+  color: white;
+  padding: 0.1rem 0.2rem;
+  border-radius: 2px;
+  font-weight: bold;
+}
+
+.expected-word .error-char {
+  background-color: #38a169;
+}
+
+.missing-chars {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* Scrollbar pour la liste des erreurs */
+.error-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.error-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.error-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.error-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 </style>
