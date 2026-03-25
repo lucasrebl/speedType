@@ -150,18 +150,6 @@ src/
 - **Pratiquez régulièrement** pour développer la mémoire musculaire
 - Commencez par le niveau **facile** puis progressez graduellement
 
-## 🤝 Contribution
-
-Les contributions sont les bienvenues ! N'hésitez pas à :
-- Signaler des bugs via les issues
-- Proposer de nouvelles fonctionnalités
-- Améliorer la documentation
-- Soumettre des pull requests
-
-## 📄 Licence
-
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
-
 ## 🔧 Configuration IDE Recommandée
 
 **VS Code** + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
